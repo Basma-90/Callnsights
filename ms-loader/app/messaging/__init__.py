@@ -1,0 +1,1 @@
+from .kafka_producer import publish_to_kafka

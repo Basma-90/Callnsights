@@ -1,0 +1,4 @@
+source,destination,starttime,service,usage
+1001,2001,2025-05-25T14:30:00,voice,12.5
+1002,2002,2025-05-25T15:00:00,data,8.3
+1003,2003,2025-05-25T15:30:00,sms,1.0
