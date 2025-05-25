@@ -43,7 +43,7 @@ python -m app.main
 
 ## Configuration
 
-The service uses environment variables for configuration. See [Configuration Guide](docs/configuration.md) for details.
+The service uses environment variables for configuration. See [Configuration Guide](docs/config.md) for details.
 
 ## Architecture
 
@@ -56,7 +56,7 @@ The service follows a modular architecture:
 ## Documentation
 
 - [Setup Guide](docs/setup.md)
-- [Configuration Guide](docs/configuration.md)
+- [Configuration Guide](docs/config.md)
 
 ## License
 
