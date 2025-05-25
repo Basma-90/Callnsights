@@ -1,0 +1,7 @@
+pandas
+pyyaml
+xmltodict
+psycopg2-binary
+confluent_kafka
+python-dotenv
+schedule
