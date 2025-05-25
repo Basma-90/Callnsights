@@ -1,0 +1,10 @@
+# Formatters & Linters
+black==24.3.0
+flake8==7.0.0
+isort==5.13.2
+
+# Pre-commit hook manager
+pre-commit==3.7.0
+
+# Type checking
+mypy==1.9.0
