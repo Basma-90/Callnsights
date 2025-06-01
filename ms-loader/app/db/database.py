@@ -4,13 +4,18 @@ from app.config.logger import logger
 
 
 def connect():
-    return psycopg2.connect(
-        host=POSTGRES["host"],
-        port=POSTGRES["port"],
-        dbname=POSTGRES["db"],
-        user=POSTGRES["user"],
-        password=POSTGRES["password"],
-    )
+    try:
+        logger.debug("Connecting to PostgreSQL database")
+        return psycopg2.connect(
+            host=POSTGRES["host"],
+            port=POSTGRES["port"],
+            dbname=POSTGRES["db"],
+            user=POSTGRES["user"],
+            password=POSTGRES["password"],
+        )
+    except Exception as e:
+        logger.error(f"Error connecting to PostgreSQL database: {e}")
+        return None
 
 
 def is_file_processed(filename):
@@ -42,7 +47,10 @@ def save_to_postgres(records):
     if not records:
         logger.warning("No records to save to PostgreSQL")
         return False
-
+    conn = connect()
+    if conn is None:
+        logger.error("Failed to connect to PostgreSQL database")
+        return False
     files_records = {}
     for record in records:
         if "file_name" not in record:
@@ -65,8 +73,8 @@ def save_to_postgres(records):
             for record in file_records:
                 cur.execute(
                     """
-                    INSERT INTO cdrs (source, destination, starttime, service, usage)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO cdrs (source, destination, starttime, service, usage, file_name)
+                    VALUES (%s, %s, %s, %s, %s ,%s)
                 """,
                     (
                         record["source"],
@@ -74,6 +82,8 @@ def save_to_postgres(records):
                         record["starttime"],
                         record["service"],
                         float(record["usage"]),
+                        record["file_name"]
+                        if "file_name" in record else None,
                     ),
                 )
 
