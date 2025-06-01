@@ -1,0 +1,63 @@
+server:
+  port: 5500
+
+spring:
+  application:
+    name: ms-backend
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/cdr_db?allowPublicKeyRetrieval=true&useSSL=false
+    username: cdr_db
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      group-id: new-consumer-group-2025
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    listener:
+      concurrency: 3
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/cdr-platform
+      client:
+        registration:
+          keycloak:
+            client-id: ms-backend
+            client-secret: BHZg91EL04cQYs6Ianz3naBQTrszK3cB
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://localhost:80080/login/oauth2/code/{registrationId}"
+            scope: profile, email, openid
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8081/realms/cdr-platform
+keycloak:
+  admin-url: http://localhost:8081/admin/realms/
+  realm: cdr-platform
+  client-id: ms-backend
+  client-secret: BHZg91EL04cQYs6Ianz3naBQTrszK3cB
+  sync-interval: 600000  # 10 minutes in milliseconds
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.kafka: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    logging.level.org.springframework.kafka: DEBUG
+    logging.level.org.apache.kafka.clients.consumer: DEBUG
+    logging.level.org.apache.kafka.common.network.Selector: DEBUG
