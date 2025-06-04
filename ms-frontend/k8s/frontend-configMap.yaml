@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ms-frontend-config
+data:
+  VITE_API_URL: "http://ms-backend-service.default.svc.cluster.local:5500/api"
+  VITE_KEYCLOAK_URL: "http://keycloak.default.svc.cluster.local:8080"
+  VITE_KEYCLOAK_REALM: "cdr-platform"
+  VITE_KEYCLOAK_CLIENT_ID: "ms-frontend"
