@@ -110,6 +110,6 @@ The system is designed for Kubernetes deployment with the following components:
 
 Each service has its own configuration parameters. Refer to the individual service documentation for details:
 
-- [MS-Loader Configuration](ms-loader/README.md)
-- [MS-Backend Configuration](ms-backend/README.md)
-- [MS-Frontend Configuration](ms-frontend/README.md)
+- [MS-Loader Configuration](https://github.com/Basma-90/Callnsights/tree/main/ms-loader/docs)
+- [MS-Backend Configuration](https://github.com/Basma-90/Callnsights/blob/main/ms-backend/demo/README.md)
+- [MS-Frontend Configuration](https://github.com/Basma-90/Callnsights/blob/main/ms-frontend/README.md)
