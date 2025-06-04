@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: ms-loader
-        image: basma227/ms-loader:v1.3 
+        image: basma227/ms-loader:v1.5
         command: ["/bin/sh", "-c"]
         args:
         - |

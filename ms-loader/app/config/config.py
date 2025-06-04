@@ -1,11 +1,19 @@
 import os
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 load_dotenv()
 
+def parse_postgres_port(port_str):
+    """Extract port from either a number or connection string"""
+    if port_str.startswith('tcp://'):
+        parsed = urlparse(port_str)
+        return int(parsed.port) if parsed.port else 5432
+    return int(port_str)
+
 POSTGRES = {
     "host": os.getenv("POSTGRES_HOST", "postgres.kafka.svc.cluster.local"),
-    "port": int(os.getenv("POSTGRES_PORT", "5432")),
+    "port": parse_postgres_port(os.getenv("POSTGRES_PORT", "5432")),
     "user": os.getenv("POSTGRES_USER", "postgres"),
     "password": os.getenv("POSTGRES_PASSWORD", "password"),
     "db": os.getenv("POSTGRES_DB", "postgres"),
