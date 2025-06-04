@@ -12,8 +12,6 @@ The CDR application is a robust microservices-based system designed for processi
 
 ## Architecture
 
-![CDR Microservices Architecture](https://placeholder-for-architecture-diagram.com)
-
 ### Microservices Overview
 
 - **MS-Loader**: 
