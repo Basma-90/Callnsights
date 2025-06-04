@@ -66,7 +66,7 @@ This application uses Keycloak for authentication. To configure:
 
 ```typescript
 const keycloakConfig = {
-  url: 'https://your-keycloak-server/auth',
+  url: 'https://your-keycloak-server/',
   realm: 'your-realm',
   clientId: 'your-client-id'
 };
