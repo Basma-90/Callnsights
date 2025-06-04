@@ -7,7 +7,7 @@ spring:
 
   datasource:
     url: jdbc:mysql://localhost:3306/cdr_db?allowPublicKeyRetrieval=true&useSSL=false
-    username: cdr_db
+    username: root
     password: password
   jpa:
     hibernate:
@@ -34,20 +34,30 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8081/realms/cdr-platform
+          jwk-set-uri: http://localhost:8081/realms/cdr-platform/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
             client-id: ms-backend
             client-secret: BHZg91EL04cQYs6Ianz3naBQTrszK3cB
-            authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:80080/login/oauth2/code/{registrationId}"
+            authorization-grant-type: client_credentials
+            redirect-uri: "http://localhost:8081/login/oauth2/code/{registrationId}"
             scope: profile, email, openid
         provider:
           keycloak:
             issuer-uri: http://localhost:8081/realms/cdr-platform
+  web:
+     cors:
+      allowed-origins: "http://localhost:5173,http://127.0.0.1:5173,*"
+      allowed-methods: "GET, POST, PUT, DELETE, OPTIONS"
+      allowed-headers: "*"
+      allow-credentials: true
+      exposed-headers: "Authorization, Content-Type, X-Requested-With"
+      max-age: 3600
 keycloak:
   admin-url: http://localhost:8081/admin/realms/
   realm: cdr-platform
+  public-client: false
   client-id: ms-backend
   client-secret: BHZg91EL04cQYs6Ianz3naBQTrszK3cB
   sync-interval: 600000  # 10 minutes in milliseconds
