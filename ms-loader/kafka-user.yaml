@@ -1,0 +1,22 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: ms-loader-user
+  namespace: kafka
+  labels:
+    strimzi.io/cluster:  ms-kafka-simple
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: cdr-records
+          patternType: literal
+        operations:
+          - Read
+          - Write
+          - Create
+        host: "*"

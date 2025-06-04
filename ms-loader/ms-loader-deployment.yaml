@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-loader
+  namespace: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-loader
+  template:
+    metadata:
+      labels:
+        app: ms-loader
+    spec:
+      containers:
+      - name: ms-loader
+        image: basma227/ms-loader:v1.3 
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "Starting application with debug information..."
+          cd /app
+          
+          # Debug environment variables
+          echo "Current environment:"
+          printenv | sort
+          
+          # Verify PostgreSQL connection
+          echo "Testing PostgreSQL connection..."
+          PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "\conninfo"
+          
+          # Run the application
+          echo "Starting Python application..."
+          python -m app.main
+        env:
+          # Kafka Configuration
+          - name: KAFKA_SERVERS
+            value: "ms-kafka-simple-kafka-bootstrap.kafka.svc.cluster.local:9092"
+          - name: KAFKA_TOPIC
+            value: "cdr-records"
+          - name: KAFKA_GROUP_ID
+            value: "cdr-consumer-group"
+          - name: KAFKA_SECURITY_PROTOCOL
+            value: "PLAINTEXT"
+
+          # PostgreSQL Configuration (Fixed)
+          - name: DB_HOST
+            value: "postgres.kafka.svc.cluster.local"  # Must match your service name
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: "postgres"
+          - name: DB_USER
+            value: "postgres"
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-creds
+                key: password
+
+          # Python-specific
+          - name: PYTHONPATH
+            value: "/app"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
