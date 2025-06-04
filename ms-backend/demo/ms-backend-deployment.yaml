@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-backend
+  template:
+    metadata:
+      labels:
+        app: ms-backend
+    spec:
+      containers:
+      - name: ms-backend
+        image: basma227/demo-backend:v1.1 
+        ports:
+        - containerPort: 8088
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql:3306/cdr_db?allowPublicKeyRetrieval=true&useSSL=false
+        - name: SPRING_DATASOURCE_USERNAME
+          value: cdr_db
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: cdr_password
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: update
+        - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+          value: org.hibernate.dialect.MySQL8Dialect
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: kafka:29092
+        - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+          value: http://keycloak:8081/realms/cdr-platform
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI
+          value: http://keycloak:8081/realms/cdr-platform
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID
+          value: ms-backend
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET
+          value: BHZg91EL04cQYs6Ianz3naBQTrszK3cB
+        
