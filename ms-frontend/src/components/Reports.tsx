@@ -20,6 +20,7 @@ type ReportType = 'day' | 'service' | 'source' | 'destination';
 interface BaseData {
   totalUsage: number;
   callCount: number;
+  usageUnit?: string; 
 }
 
 interface DailyUsageData extends BaseData {
@@ -45,6 +46,12 @@ interface ChartData {
     borderWidth?: number;
   }[];
 }
+
+
+const formatUsage = (usage: number, usageUnit?: string): string => {
+  if (!usageUnit) return `${usage} units`;
+  return `${usage.toFixed(2)} ${usageUnit}`;
+};
 
 const ReportCharts: React.FC = () => {
   const [reportType, setReportType] = useState<ReportType>('day');
@@ -105,7 +112,7 @@ const ReportCharts: React.FC = () => {
     datasets: reportType === 'day'
       ? [
           {
-            label: 'Usage (seconds)',
+            label: `Usage (${data[0]?.usageUnit || 'units'})`, // Dynamically set the unit
             data: (data as DailyUsageData[]).map(d => d.totalUsage),
             backgroundColor: 'rgba(75, 192, 192, 0.6)',
             borderColor: 'rgba(75, 192, 192, 1)',
@@ -121,7 +128,7 @@ const ReportCharts: React.FC = () => {
         ]
       : [
           {
-            label: `Usage by ${reportType}`,
+            label: `Usage by ${reportType} (${data[0]?.usageUnit || 'units'})`, // Dynamically set the unit
             data: data.map(d => d.totalUsage),
             backgroundColor: reportType === 'service'
               ? ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
@@ -190,10 +197,25 @@ const ReportCharts: React.FC = () => {
           <div className={styles.analysis}>
             <h3>Report Summary</h3>
             <ul>
-              <li><strong>Total Usage:</strong> {totalUsage} seconds</li>
-              <li><strong>Total Calls:</strong> {totalCalls}</li>
-              <li><strong>Average Call Duration:</strong> {avgCallDuration} sec/call</li>
-              <li><strong>Report Type:</strong> {reportType}</li>
+              <li>
+                <strong>Total Usage:</strong>{' '}
+                {data.length > 0
+                  ? formatUsage(totalUsage, data[0]?.usageUnit)
+                  : 'No data available'}
+              </li>
+              <li>
+                <strong>Total Calls:</strong>{' '}
+                {data.length > 0 ? totalCalls : 'No data available'}
+              </li>
+              <li>
+                <strong>Average Call Duration:</strong>{' '}
+                {data.length > 0
+                  ? formatUsage(Number(avgCallDuration), data[0]?.usageUnit) + '/call'
+                  : 'No data available'}
+              </li>
+              <li>
+                <strong>Report Type:</strong> {reportType}
+              </li>
             </ul>
           </div>
         </>

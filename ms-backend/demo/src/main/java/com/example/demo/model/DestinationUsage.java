@@ -4,13 +4,16 @@ public class DestinationUsage {
     private String destination;
     private double totalUsage;
     private long callCount;
+    private String serviceType; 
+
     
     public DestinationUsage() {
     }
     
-    public DestinationUsage(String destination, double totalUsage, long callCount) {
+    public DestinationUsage(String destination, double totalUsage, long callCount, String serviceType) {
         this.destination = destination;
-        this.totalUsage = totalUsage;
+        this.serviceType = serviceType;
+         this.totalUsage = totalUsage;
         this.callCount = callCount;
     }
 
@@ -37,4 +40,12 @@ public class DestinationUsage {
     public void setCallCount(long callCount) {
         this.callCount = callCount;
     }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+   public void setServiceType(String serviceType){
+        this.serviceType = serviceType;
+   }
 }

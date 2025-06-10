@@ -1,27 +1,21 @@
 package com.example.demo.controller;
 
-import java.time.LocalDate;
-
 public class ReportData {
     private String date;
     private double totalUsage;
-    private long callCount;
-    
-    public ReportData() {
-    }
-    
-    public ReportData(String date, double totalUsage, long callCount) {
+    private long interactionCount;
+    private String serviceType; // New field for service type
+    private String usageUnit;   // Optional: Unit of usage (e.g., minutes, messages, MB)
+
+    public ReportData(String date, double totalUsage, long interactionCount, String serviceType, String usageUnit) {
         this.date = date;
         this.totalUsage = totalUsage;
-        this.callCount = callCount;
-    }
-    
-    public ReportData(LocalDate date, double totalUsage, long callCount) {
-        this.date = date.toString();
-        this.totalUsage = totalUsage;
-        this.callCount = callCount;
+        this.interactionCount = interactionCount;
+        this.serviceType = serviceType;
+        this.usageUnit = usageUnit;
     }
 
+    // Getters and setters
     public String getDate() {
         return date;
     }
@@ -38,20 +32,27 @@ public class ReportData {
         this.totalUsage = totalUsage;
     }
 
-    public long getCallCount() {
-        return callCount;
+    public long getInteractionCount() {
+        return interactionCount;
     }
 
-    public void setCallCount(long callCount) {
-        this.callCount = callCount;
+    public void setInteractionCount(long interactionCount) {
+        this.interactionCount = interactionCount;
     }
 
-    @Override
-    public String toString() {
-        return "ReportData{" +
-                "date='" + date + '\'' +
-                ", totalUsage=" + totalUsage +
-                ", callCount=" + callCount +
-                '}';
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
+    }
+
+    public String getUsageUnit() {
+        return usageUnit;
+    }
+
+    public void setUsageUnit(String usageUnit) {
+        this.usageUnit = usageUnit;
     }
 }

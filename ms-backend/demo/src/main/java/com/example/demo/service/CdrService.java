@@ -65,34 +65,111 @@ public class CdrService {
                 .collect(Collectors.toList());
     }
 
-    public List<ReportData> getAggregatedCdrsByDay(String serviceType, String startDate, String endDate) {
-        List<Cdr> filteredCdrs = cdrRepository.findAll().stream()
-            .filter(cdr -> cdr.getStartTime() != null)
-            .filter(cdr -> startDate == null || cdr.getStartTime().toLocalDate().toString().compareTo(startDate) >= 0)
-            .filter(cdr -> endDate == null || cdr.getStartTime().toLocalDate().toString().compareTo(endDate) <= 0)
-            .filter(cdr -> serviceType == null || 
-                   (cdr.getServiceType() != null && 
-                    cdr.getServiceType().name().equalsIgnoreCase(serviceType)))
-            .collect(Collectors.toList());
-    
-    Map<String, DoubleSummaryStatistics> groupedByDay = filteredCdrs.stream()
+    private String getUsageUnit(String serviceType) {
+        switch (serviceType.toUpperCase()) {
+            case "VOICE": return "minutes";
+            case "DATA": return "MB";
+            case "SMS": return "messages";
+            default: return "units";
+        }
+    }
+
+    private double formatUsageForService(double usage, String serviceType) {
+        switch (serviceType.toUpperCase()) {
+            case "VOICE":
+                return Math.round(usage * 100.0) / 100.0; 
+            case "DATA":
+                return Math.round(usage * 100.0) / 100.0; 
+            case "SMS":
+                return Math.round(usage); 
+            default:
+                return usage;
+        }
+    }
+
+    public List<DestinationUsage> getAggregatedCdrsByDestination(String startDate, String endDate) {
+        Map<String, Map<String, DoubleSummaryStatistics>> destServiceStats = cdrRepository.findAll().stream()
+            .filter(cdr -> cdr.getDestination() != null &&
+                          cdr.getStartTime() != null &&
+                          cdr.getServiceType() != null)
+            .filter(cdr -> startDate == null || 
+                          cdr.getStartTime().toLocalDate().toString().compareTo(startDate) >= 0)
+            .filter(cdr -> endDate == null || 
+                          cdr.getStartTime().toLocalDate().toString().compareTo(endDate) <= 0)
             .collect(Collectors.groupingBy(
-                cdr -> cdr.getStartTime().toLocalDate().toString(),
-                Collectors.summarizingDouble(Cdr::getUsage)
+                    Cdr::getDestination,
+                    Collectors.groupingBy(
+                        cdr -> cdr.getServiceType().name(),
+                        Collectors.summarizingDouble(Cdr::getUsage)
+                    )
             ));
-    
-    return groupedByDay.entrySet().stream()
-            .map(entry -> new ReportData(
-                    entry.getKey(),
-                    entry.getValue().getSum(),
-                    entry.getValue().getCount()
-            ))
-            .sorted(Comparator.comparing(ReportData::getDate))
+
+        return destServiceStats.entrySet().stream()
+            .flatMap(destEntry -> {
+                String destination = destEntry.getKey();
+                Map<String, DoubleSummaryStatistics> serviceStats = destEntry.getValue();
+                return serviceStats.entrySet().stream().map(serviceEntry -> {
+                    String serviceType = serviceEntry.getKey();
+                    DoubleSummaryStatistics stats = serviceEntry.getValue();
+
+                    double totalUsage = formatUsageForService(stats.getSum(), serviceType);
+                    long interactionCount = stats.getCount();
+
+                    return new DestinationUsage(
+                            destination,
+                            totalUsage,
+                            interactionCount,
+                            serviceType
+                    );
+                });
+            })
+            .sorted(Comparator.comparing(DestinationUsage::getTotalUsage).reversed())
+            .collect(Collectors.toList());
+    }
+
+    public List<SourceUsage> getAggregatedCdrsBySource(String startDate, String endDate) {
+        Map<String, Map<String, DoubleSummaryStatistics>> sourceServiceStats = cdrRepository.findAll().stream()
+            .filter(cdr -> cdr.getSource() != null &&
+                          cdr.getStartTime() != null &&
+                          cdr.getServiceType() != null)
+            .filter(cdr -> startDate == null || 
+                          cdr.getStartTime().toLocalDate().toString().compareTo(startDate) >= 0)
+            .filter(cdr -> endDate == null || 
+                          cdr.getStartTime().toLocalDate().toString().compareTo(endDate) <= 0)
+            .collect(Collectors.groupingBy(
+                    Cdr::getSource,
+                    Collectors.groupingBy(
+                        cdr -> cdr.getServiceType().name(),
+                        Collectors.summarizingDouble(Cdr::getUsage)
+                    )
+            ));
+
+        return sourceServiceStats.entrySet().stream()
+            .flatMap(sourceEntry -> {
+                String source = sourceEntry.getKey();
+                Map<String, DoubleSummaryStatistics> serviceStats = sourceEntry.getValue();
+
+                return serviceStats.entrySet().stream().map(serviceEntry -> {
+                    String serviceType = serviceEntry.getKey();
+                    DoubleSummaryStatistics stats = serviceEntry.getValue();
+
+                    double totalUsage = formatUsageForService(stats.getSum(), serviceType);
+                    long interactionCount = stats.getCount();
+
+                    return new SourceUsage(
+                            source,
+                            totalUsage,
+                            interactionCount,
+                            serviceType
+                    );
+                });
+            })
+            .sorted(Comparator.comparing(SourceUsage::getTotalUsage).reversed())
             .collect(Collectors.toList());
     }
 
     public List<ServiceTypeUsage> getAggregatedCdrsByServiceType(String startDate, String endDate) {
-       return cdrRepository.findAll().stream()
+        return cdrRepository.findAll().stream()
             .filter(cdr -> cdr.getServiceType() != null &&
                           cdr.getStartTime() != null)
             .filter(cdr -> startDate == null || 
@@ -104,57 +181,60 @@ public class CdrService {
                     Collectors.summarizingDouble(Cdr::getUsage)
             ))
             .entrySet().stream()
-            .map(entry -> new ServiceTypeUsage(
-                    entry.getKey(),
-                    entry.getValue().getSum(),
-                    entry.getValue().getCount()
-            ))
+            .map(entry -> {
+                String serviceType = entry.getKey();
+                double totalUsage = formatUsageForService(entry.getValue().getSum(), serviceType);
+
+                return new ServiceTypeUsage(
+                        serviceType,
+                        totalUsage,
+                        entry.getValue().getCount()
+                );
+            })
             .collect(Collectors.toList());
     }
+    public List<ReportData> getAggregatedCdrsByDay(String serviceType, String startDate, String endDate) {
+    Map<String, Map<String, DoubleSummaryStatistics>> groupedByDayAndService = cdrRepository.findAll().stream()
+        .filter(cdr -> cdr.getStartTime() != null) 
+        .filter(cdr -> serviceType == null || 
+                      (cdr.getServiceType() != null && 
+                       cdr.getServiceType().name().equalsIgnoreCase(serviceType))) 
+        .filter(cdr -> startDate == null || 
+                      cdr.getStartTime().toLocalDate().toString().compareTo(startDate) >= 0) 
+        .filter(cdr -> endDate == null || 
+                      cdr.getStartTime().toLocalDate().toString().compareTo(endDate) <= 0) 
+        .collect(Collectors.groupingBy(
+            cdr -> cdr.getStartTime().toLocalDate().toString(), 
+            Collectors.groupingBy(
+                cdr -> cdr.getServiceType().name(),
+                Collectors.summarizingDouble(Cdr::getUsage) 
+            )
+        ));
 
-    public List<SourceUsage> getAggregatedCdrsBySource(String startDate, String endDate) {
-         return cdrRepository.findAll().stream()
-            .filter(cdr -> cdr.getSource() != null &&
-                          cdr.getStartTime() != null)
-            .filter(cdr -> startDate == null || 
-                          cdr.getStartTime().toLocalDate().toString().compareTo(startDate) >= 0)
-            .filter(cdr -> endDate == null || 
-                          cdr.getStartTime().toLocalDate().toString().compareTo(endDate) <= 0)
-            .collect(Collectors.groupingBy(
-                    Cdr::getSource,
-                    Collectors.summarizingDouble(Cdr::getUsage)
-            ))
-            .entrySet().stream()
-            .map(entry -> new SourceUsage(
-                    entry.getKey(),
-                    entry.getValue().getSum(),
-                    entry.getValue().getCount()
-            ))
-            .collect(Collectors.toList());
+    return groupedByDayAndService.entrySet().stream()
+        .flatMap(dayEntry -> {
+            String date = dayEntry.getKey();
+            Map<String, DoubleSummaryStatistics> serviceStats = dayEntry.getValue();
 
-    }
+            return serviceStats.entrySet().stream().map(serviceEntry -> {
+                String serviceTypeKey = serviceEntry.getKey();
+                DoubleSummaryStatistics stats = serviceEntry.getValue();
+                double totalUsage = stats.getSum();
+                long interactionCount = stats.getCount();
 
-    public List<DestinationUsage> getAggregatedCdrsByDestination(String startDate, String endDate) {
-       return cdrRepository.findAll().stream()
-            .filter(cdr -> cdr.getDestination() != null &&
-                          cdr.getStartTime() != null)
-            // Filter by date range if specified
-            .filter(cdr -> startDate == null || 
-                          cdr.getStartTime().toLocalDate().toString().compareTo(startDate) >= 0)
-            .filter(cdr -> endDate == null || 
-                          cdr.getStartTime().toLocalDate().toString().compareTo(endDate) <= 0)
-            // Group by destination
-            .collect(Collectors.groupingBy(
-                    Cdr::getDestination,
-                    Collectors.summarizingDouble(Cdr::getUsage)
-            ))
-            .entrySet().stream()
-            .map(entry -> new DestinationUsage(
-                    entry.getKey(),
-                    entry.getValue().getSum(),
-                    entry.getValue().getCount()
-            ))
-            .collect(Collectors.toList());
+                String usageUnit = getUsageUnit(serviceTypeKey);
+                totalUsage = formatUsageForService(totalUsage, serviceTypeKey);
 
-    }
+                return new ReportData(
+                    date,
+                    totalUsage,
+                    interactionCount,
+                    serviceTypeKey,
+                    usageUnit
+                );
+            });
+        })
+        .sorted(Comparator.comparing(ReportData::getDate)) // Sort by date
+        .collect(Collectors.toList());
+}
 }
